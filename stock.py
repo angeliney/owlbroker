@@ -1,13 +1,13 @@
 class Stock:
 '''Class for defining stock data structure. On initialization the
        stock object should be given a name. Stock prices can be added later on.
-‘’’
+'''
     #
     #set up and info methods
     #
     def __init__(self, name, prices=[]):
         '''Create a stock object, specifying its name (a
-        string). Optionally specify recent stock prices.
+        string). Optionally specify available stock price history.
         '''
         self.name = name                #text name for variable
         self.prices = list(prices)         #Make a copy of passed domain
