@@ -1,0 +1,9 @@
+Dependecies for this to work:
+datetime
+matplotlib
+pandas
+pandas_datareader
+
+How to get them:
+1) After installing the latest python, or one that comes with pip install.
+2) In the command line one can just type: pip install matplotlib, pip install pandas...
