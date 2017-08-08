@@ -57,7 +57,7 @@ def main():
     transaction_fee = 10
     
     ss = StockSimulator(inital_fund, ticker_list, start_date, end_date, transaction_fee)
-    
+    # TESTING
     ss.print_portfolio()
     
     
