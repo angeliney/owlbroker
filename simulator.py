@@ -52,12 +52,16 @@ class StockSimulator():
 def main():
     start_date = datetime.datetime(2017, 7, 1)
     end_date = datetime.datetime(2017, 7, 31)
-    ticker_list = ["IBM"]
+    ticker_list = ["IBM", "AMZN", "TSLA"]
     inital_fund = 50000
     transaction_fee = 10
     
     ss = StockSimulator(inital_fund, ticker_list, start_date, end_date, transaction_fee)
     # TESTING
+    IBM = ss.get_ticker('TSLA')
+    IBM_data = IBM[1]
+    IBM_data['HL-MovAvg'] = IBM_data[['High', 'Low']].mean(axis=1)
+    ss.add_ticker(['GOOG'])
     ss.print_portfolio()
     
     
