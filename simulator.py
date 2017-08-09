@@ -36,6 +36,13 @@ class StockSimulator():
             if ticker_data[0] == ticker:
                 return ticker_data
         raise ValueError("Ticker not tracked")
+
+    def get_ticker_moving_average(self, ticker):
+        for ticker_data in self.ticker_data_list:
+            if ticker_data[0] == ticker:
+                ticker_data[1]['HL-MovAvg'] = ticker_data[1][['High', 'Low']].mean(axis=1)
+                return ticker_data[1]['HL-MovAvg']
+        raise ValueError("Ticker not tracked")
     
     def add_ticker(self, ticker):
         if ticker in self.tickerList:
@@ -52,12 +59,15 @@ class StockSimulator():
 def main():
     start_date = datetime.datetime(2017, 7, 1)
     end_date = datetime.datetime(2017, 7, 31)
-    ticker_list = ["IBM"]
+    ticker_list = ["IBM", "AMZN", "TSLA"]
     inital_fund = 50000
     transaction_fee = 10
     
     ss = StockSimulator(inital_fund, ticker_list, start_date, end_date, transaction_fee)
-    
+    # TESTING
+    IBM = ss.get_ticker('IBM')
+    TSLA_ma = ss.get_ticker_moving_average('TSLA')
+    print(TSLA_ma)
     ss.print_portfolio()
     
     
