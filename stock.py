@@ -1,29 +1,63 @@
-class Stock:
-'''Class for defining stock data structure. On initialization the
-       stock object should be given a name. Stock prices can be added later on.
-'''
-    #
-    #set up and info methods
-    #
-    def __init__(self, name, prices=[]):
-        '''Create a stock object, specifying its name (a
-        string). Optionally specify available stock price history.
-        '''
-        self.name = name                #text name for variable
-        self.prices = list(prices)         #Make a copy of passed domain
-        self.assignedAction = None
+import datetime
+import pandas as pd
+from pandas_datareader import data, wb
+import numpy as np
+from scipy.signal import argrelextrema
 
-    def add_prices(self, values):
-        '''Add additional prices to the domain.
-           Removals are not supported.'''
-        for val in values:
-            self.dom.append(val)
-            self.curdom.append(True)
+# Testing libs
+import matplotlib.pyplot as plt
+import time
 
-    def price_size(self):
-        '''Return the size of the (permanent) prices stored'''
-        return(len(self.prices))
+from portfolio import *
 
-    def domain(self):
-        '''return the variable's (permanent) domain'''
-        return(list(self.dom))
+class Stock():
+    def __init__(self, inital_fund, tickerList, start_date, end_date, transaction_fee):
+        """
+        Create a new Stock Simulator.
+
+        """
+        self.tickerList = tickerList
+        self.start_date = start_date
+        self.end_date = end_date
+        self.portfolio =  Portfolio(inital_fund,transaction_fee)
+
+        self.ticker_data_list = []
+        for ticker in tickerList:
+            self.ticker_data_list.append([ticker, data.DataReader(ticker, "google", start_date, end_date)])
+
+    def transaction_fee(self):
+        return self.portfolio.transaction_fee
+
+    def initial_fund(self):
+        return self.portfolio.inital_fund
+
+    def current_fund(self):
+        return self.portfolio.fund
+
+    def print_portfolio(self):
+        return self.portfolio.print_portfolio()
+
+    def get_ticker(self, ticker):
+        for ticker_data in self.ticker_data_list:
+            if ticker_data[0] == ticker:
+                return ticker_data
+        raise ValueError("Ticker not tracked")
+
+    def get_ticker_moving_average(self, ticker):
+        for ticker_data in self.ticker_data_list:
+            if ticker_data[0] == ticker:
+                ticker_data[1]['HL-MovAvg'] = ticker_data[1][['High', 'Low']].mean(axis=1)
+                return ticker_data[1]['HL-MovAvg']
+        raise ValueError("Ticker not tracked")
+
+    def add_ticker(self, ticker):
+        if ticker in self.tickerList:
+            raise ValueError("Ticker already tracked")
+
+        self.tickerList.append(ticker)
+        self.ticker_data_list.append[ticker, data.DataReader(ticker, "google", start_date, end_date)]
+
+    # hopefully we don't need to do threads
+    def nextMinute():
+        sleeptime = 60 - datetime.utcnow().second
+        time.sleep(sleeptime)

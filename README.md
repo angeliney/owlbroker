@@ -1,6 +1,9 @@
-# owlbroker
+# Owl Broker
 csc384 assignment to decide when to buy, sell, or short stocks
 
+# Instruction
+1. Install all module dependencies by running ‘pip install pandas pandas_datareader scipy matplotlib'
+2. Run simulator.py by  ‘python3 simulator.py’
 
 # Data Structure (WIP)
 Engine
@@ -12,8 +15,8 @@ def __init__(self, param1, param2, param3, param4, param5):
         param3: end date
         param4: amount
         param5: transaction fee (per action)
-        
-    
+
+
     Description
         - The engine will tick every minute simulating a live market
 ```
@@ -44,9 +47,7 @@ def sell(symbol, amount) -> bool
 
 Others:
 ```
-def get_raw_data() -> 
+def get_raw_data() ->
 Returns a list of tuples of timestamp and price.
 [(2017-01-01 10:00, 100.23), (2017-01-01 10:01, 100.25) ...]
 ```
-
-
