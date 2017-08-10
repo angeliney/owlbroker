@@ -3,6 +3,7 @@ import pandas as pd
 from pandas_datareader import data, wb
 import numpy as np
 from scipy.signal import argrelextrema
+import time
 
 from portfolio import *
 
@@ -107,10 +108,10 @@ class StockSimulator():
             
         return req_1 and req_2 and req_3
 
-    def match_head_shoulders(self, ticker, data):
+    def match_head_shoulders(self, ticker):
         for ticker_data in self.ticker_data_list:
             if ticker_data[0] == ticker:
-                #data = self.get_ticker_moving_average(ticker).values
+                data = self.get_ticker_moving_average(ticker).values
                 # order is the amount of data around a point to determine if is a local max/min
                 max_idx = list(argrelextrema(data, np.greater, order=1)[0])
                 min_idx = list(argrelextrema(data, np.less, order=1)[0])
@@ -129,9 +130,8 @@ def main():
     
     ss = StockSimulator(inital_fund, ticker_list, start_date, end_date, transaction_fee)
     ss.print_portfolio()
-    # TESTING
+    # TESTING HEAD AND SHOULDERS
     ma = ss.get_ticker_moving_average('TSLA')
-    print(ma)
     ma[0] = 300
     ma[1] = 310
     ma[2] = 320
@@ -152,17 +152,12 @@ def main():
     ma[17] = 340
     ma[18] = 332
     ma[19] = 305
-
     ibm_data = ss.get_ticker('IBM')
     ibm_data[1]['HL-MovAvg'] = ma.values
     ss.ticker_data_list.append(['MYSTK', ibm_data[1]])
     data = ibm_data[1]['HL-MovAvg']
-    ss.match_head_shoulders('MYSTK', data)
-            
-
-    
-    
-
+    ## THIS DOES FIND THE HS PATTERN :)
+    #print(ss.match_head_shoulders('MYSTK', data.values))
     
 
 if __name__ == "__main__":
