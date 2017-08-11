@@ -7,8 +7,14 @@ from scipy.signal import argrelextrema
 # Testing libs
 import matplotlib.pyplot as plt
 import time
+import math
 
 from portfolio import *
+from stock import *
+
+MAX_INVESTMENT=0.1
+PATTERNS = ["head_shoulders", "triangle", "double_top", "double_bottom"]
+ORDERS = ["maxprofit", "maxvol", "minvol"]
 
 def match_helper(data, indices, pattern):
     """
@@ -72,39 +78,115 @@ def match_helper(data, indices, pattern):
 
         req_3 = e2_lower and e4_lower and e2_upper and e4_upper
 
-        return req_1 and req_2 and req_3
+        res = req_1 and req_2 and req_3
 
-    if pattern == 'triangles':
-        return False
+    elif pattern == 'triangles':
+        res = False
 
-    if pattern == 'double_top':
+    elif pattern == 'double_top':
         req_1 = (e2 - e1) > 0
         req_2 = (e3 - e2) < 0
         req_3 = (e4 - e3) > 0
         req_4 = (e5 - e4) < 0
-        return req_1 and req_2 and req_3 and req_4
+        res = req_1 and req_2 and req_3 and req_4
 
-    if pattern == 'double_bottom':
+    elif pattern == 'double_bottom':
         req_1 = (e2 - e1) < 0
         req_2 = (e3 - e2) > 0
         req_3 = (e4 - e3) < 0
         req_4 = (e5 - e4) > 0
-        return req_1 and req_2 and req_3 and req_4
+        res = req_1 and req_2 and req_3 and req_4
 
-def match_pattern(ticker_data_list, ticker, pattern_type, data):
-    for ticker_data in ticker_data_list:
-        if ticker_data[0] == ticker:
-            #data = get_ticker_moving_average(ticker).values
-            # order is the amount of data around a point to determine if is a local max/min
-            max_idx = list(argrelextrema(data, np.greater, order=1)[0])
-            min_idx = list(argrelextrema(data, np.less, order=1)[0])
-            # added the very last data point as the future is unknown
-            all_idx = max_idx + min_idx + [len(data)-1]
-            all_idx.sort()
-            all_idx = all_idx[-5:]
-            # testing
-            plt.plot(data)
-            plt.scatter(all_idx, data[all_idx], c='r')
-            plt.show()
-            return match_helper(data, all_idx, pattern_type)
-    raise ValueError("Ticker not tracked")
+    else:
+        res = False
+
+    return (res, e3, e4, e5)
+
+def match_pattern(pattern_type, data):
+    #data = ss.get_ticker_moving_average(ticker).values
+    # order is the amount of data around a point to determine if is a local max/min
+    max_idx = list(argrelextrema(data, np.greater, order=1)[0])
+    min_idx = list(argrelextrema(data, np.less, order=1)[0])
+    # added the very last data point as the future is unknown
+    all_idx = max_idx + min_idx + [len(data)-1]
+    all_idx.sort()
+    all_idx = all_idx[-5:]
+    # testing
+    plt.plot(data)
+    plt.scatter(all_idx, data[all_idx], c='r')
+    plt.show()
+    return match_helper(data, all_idx, pattern_type)
+
+def check_eligibility(sm, stock, e3, e4, e5, pattern):
+    # Check if 10% of the investment modal is enough to purchase the company stock
+    if (sm.get_current_fund() * 0.1 < e5):
+        return False
+
+    # Vol is the number of stocks we can buy.
+    # We assume that the max amount we can spend on a company is MAX_INVESTMENT of investment
+    vol = math.floor((sm.get_current_fund() * MAX_INVESTMENT) / e5)
+
+    # Check: Potential for profit needs to be greater than transaction fee
+    if (abs(e3 - e4) * 0.9 < sm.get_transaction_fee()):
+        return False
+
+    profit_margin = abs(e5 - e3) * 0.8
+    if profit_margin * vol > sm.get_transaction_fee():
+        if e5 > e3:
+            target_price = e5 - profit_margin
+        else:
+            target_price = e5 + profit_margin
+    else:
+        return False
+
+    stock.vol = vol
+    stock.target_price = target_price
+    stock.profit_margin = profit_margin
+    stock.current_price = e5
+    return True
+
+# Orders stock in different ways based on profits, volumes bought
+def order(type, stock_list):
+    if type == "maxprofit":
+        newlist = sorted(stock_list, key=lambda x: x.vol * x.profit_margin, reverse=True)
+    elif type == "maxvol":
+        newlist = sorted(stock_list, key=lambda x: x.vol , reverse=True)
+    elif type == "minvol":
+        newlist = sorted(stock_list, key=lambda x: x.vol)
+    else:
+        newlist = stock_list
+    return newlist
+
+
+# Main function to run functionality of owl broker
+def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, transaction_fee):
+    MAX_INVESTMENT = 1/max_stocks
+    sm = StockManagement(initial_fund, ticker_list, start_date, end_date, transaction_fee, period)
+
+    stock_list=[]
+    for stock_name in sm.stocks:
+        stock = sm.stocks[stock_name]
+        data = stock.get_moving_average().values
+        for pattern in PATTERNS:
+            result = match_pattern(pattern, data[0:period-1])
+            if result[0]:
+                print("{} stock matches with pattern {}".format(stock.ticker, pattern))
+                if check_eligibility(sm, stock, result[1], result[2], result[3], pattern):
+                    stock_list.append(stock)
+
+    for order_type in ORDERS:
+        print("ordering stocks by {}".format(order_type))
+        # Take top MAX_STOCKS investments
+        lst = order(order_type, stock_list)[0:max_stocks-1]
+        # Update portfolio
+        p = Portfolio(initial_fund, transaction_fee)
+        for stock in lst:
+            p.add_stock(stock.ticker, stock.current_price, stock.vol, None, stock.target_price)
+
+def eval(sm, p):
+    for stockname, stock in sm.stocks.items():
+        date = stock.target_time()
+        if date:
+            p.remove_stock(stockname, stock.data[-1], stock.vol, date)
+
+    p.print_portfolio()
