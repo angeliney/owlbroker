@@ -12,7 +12,6 @@ import math
 from portfolio import *
 from stock import *
 
-MAX_INVESTMENT=0.1
 PATTERNS = ["head_shoulders", "triangle", "double_top", "double_bottom"]
 ORDERS = ["maxprofit", "maxvol", "minvol"]
 
@@ -112,9 +111,9 @@ def match_pattern(pattern_type, data):
     all_idx.sort()
     all_idx = all_idx[-5:]
     # testing
-    plt.plot(data)
-    plt.scatter(all_idx, data[all_idx], c='r')
-    plt.show()
+    #plt.plot(data)
+    #plt.scatter(all_idx, data[all_idx], c='r')
+    #plt.show()
     return match_helper(data, all_idx, pattern_type)
 
 def check_eligibility(sm, stock, e3, e4, e5, pattern):
@@ -123,8 +122,8 @@ def check_eligibility(sm, stock, e3, e4, e5, pattern):
         return False
 
     # Vol is the number of stocks we can buy.
-    # We assume that the max amount we can spend on a company is MAX_INVESTMENT of investment
-    vol = math.floor((sm.get_current_fund() * MAX_INVESTMENT) / e5)
+    # We assume that the max amount we can spend on a company is max_investment of investment
+    vol = math.floor((sm.get_current_fund() * sm.max_investment) / e5)
 
     # Check: Potential for profit needs to be greater than transaction fee
     if (abs(e3 - e4) * 0.9 < sm.get_transaction_fee()):
@@ -157,18 +156,24 @@ def order(type, stock_list):
         newlist = stock_list
     return newlist
 
+def eval(sm, p):
+    for stockname, stock in sm.stocks.items():
+        date = stock.target_time()
+        if date:
+            p.remove_stock(stockname, stock.data[-1], stock.vol, date)
+
+    p.print_portfolio()
 
 # Main function to run functionality of owl broker
 def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, transaction_fee):
-    MAX_INVESTMENT = 1/max_stocks
-    sm = StockManagement(initial_fund, ticker_list, start_date, end_date, transaction_fee, period)
+    sm = StockManagement(initial_fund, ticker_list, start_date, end_date, transaction_fee, period, max_stocks)
 
     stock_list=[]
     for stock_name in sm.stocks:
         stock = sm.stocks[stock_name]
         data = stock.get_moving_average().values
         for pattern in PATTERNS:
-            result = match_pattern(pattern, data[0:period-1])
+            result = match_pattern(pattern, data[0:stock.period-1])
             if result[0]:
                 print("{} stock matches with pattern {}".format(stock.ticker, pattern))
                 if check_eligibility(sm, stock, result[1], result[2], result[3], pattern):
@@ -181,12 +186,5 @@ def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, tra
         # Update portfolio
         p = Portfolio(initial_fund, transaction_fee)
         for stock in lst:
-            p.add_stock(stock.ticker, stock.current_price, stock.vol, None, stock.target_price)
-
-def eval(sm, p):
-    for stockname, stock in sm.stocks.items():
-        date = stock.target_time()
-        if date:
-            p.remove_stock(stockname, stock.data[-1], stock.vol, date)
-
-    p.print_portfolio()
+            p.add_stock(stock.ticker, stock.current_price, stock.vol, sm.start_date + datetime.timedelta(days = stock.period), stock.target_price)
+        eval(sm, p)

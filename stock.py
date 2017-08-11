@@ -3,15 +3,12 @@ import pandas as pd
 from pandas_datareader import data, wb
 import numpy as np
 from scipy.signal import argrelextrema
-
-# Testing libs
-import matplotlib.pyplot as plt
 import time
 
 from portfolio import *
 
 class StockManagement():
-    def __init__(self, inital_fund, ticker_list, start_date, end_date, transaction_fee, period):
+    def __init__(self, inital_fund, ticker_list, start_date, end_date, transaction_fee, period, max_stocks=10):
         """
         Create a new Stock Simulator.
 
@@ -19,10 +16,11 @@ class StockManagement():
         self.start_date = start_date
         self.end_date = end_date
         self.portfolio =  Portfolio(inital_fund,transaction_fee)
-
+        self.max_investment = 1/max_stocks
         self.stocks = {}
         for ticker in ticker_list:
             self.add_ticker(ticker, start_date, end_date, period)
+
 
     def get_transaction_fee(self):
         return self.portfolio.transaction_fee
@@ -77,12 +75,12 @@ class Stock():
 
     # Return the date when price is within open and close
     def target_time(self):
-        if (self.sell_price < 0):
+        if (self.target_price < 0):
             return False
 
-        # TODO check format of self.data
+        # TODO check format of self.data and fix this
         day_count = 0
-        for v1, v2 in self.data[1][['Open', 'Close']][period:]:
+        for v1, v2 in self.data[['Open', 'Close']][self.period:]:
             if (self.target_price <= v1 and self.target_price >= v2) or (self.target_price >= v1 and self.target_price <= v2):
                 return start_date + datetime.timedelta(days = period + day_count)
             day_count += 1
