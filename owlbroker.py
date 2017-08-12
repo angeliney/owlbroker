@@ -133,8 +133,10 @@ def check_eligibility(sm, stock, e3, e4, e5, pattern):
     if profit_margin * vol > sm.get_transaction_fee():
         if e5 > e3:
             target_price = e5 - profit_margin
+            stock.action = "short"
         else:
             target_price = e5 + profit_margin
+            stock.action = "buy"
     else:
         return False
 
@@ -160,7 +162,7 @@ def eval(sm, p):
     for stockname, stock in sm.stocks.items():
         date = stock.target_time()
         if date:
-            p.remove_stock(stockname, stock.data[-1], stock.vol, date)
+            p.remove_stock(stockname, stock.target_price, stock.vol, date, stock.action)
 
     p.print_portfolio()
 
@@ -178,7 +180,11 @@ def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, tra
                 print("{} stock matches with pattern {}".format(stock.ticker, pattern))
                 if check_eligibility(sm, stock, result[1], result[2], result[3], pattern):
                     stock_list.append(stock)
-
+                    
+    if not stock_list:
+        print('No stocks are favorable')
+        return
+    
     for order_type in ORDERS:
         print("ordering stocks by {}".format(order_type))
         # Take top MAX_STOCKS investments
@@ -186,5 +192,5 @@ def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, tra
         # Update portfolio
         p = Portfolio(initial_fund, transaction_fee)
         for stock in lst:
-            p.add_stock(stock.ticker, stock.current_price, stock.vol, sm.start_date + datetime.timedelta(days = stock.period), stock.target_price)
+            p.add_stock(stock.ticker, stock.current_price, stock.vol, sm.start_date + datetime.timedelta(days = stock.period), stock.target_price, stock.action)
         eval(sm, p)

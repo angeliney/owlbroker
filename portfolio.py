@@ -3,41 +3,49 @@ class Portfolio():
         self.inital_fund = fund
         self.fund = fund
         self.holding = initial_holding
+        self.holding.clear()
         self.transaction_fee = transaction_fee
         '''
         holding data structure:
          {ticker: current_volume, [[price_bought, volume, buy/sell, transaction_date]...]] }
         '''
 
-    def add_stock(self, ticker, price, volume, date, sell_price):
-        total_price = (price * volume) + self.transaction_fee
+    def add_stock(self, ticker, price, volume, date, sell_price, action):
+        total_price = (price * volume)
         if total_price > self.fund:
             raise ValueError('Insufficent funds')
-
-        self.fund -= total_price
+        
+        if action == "short":
+            self.fund += total_price - self.transaction_fee
+        else:
+            self.fund -= total_price + self.transaction_fee
 
         if ticker not in self.holding:
-            self.holding[ticker] = [volume, [[price, volume, "buy", date]]]
+            self.holding[ticker] = [volume, [[price, volume, action, date]]]
         else:
             each_holding = self.holding[ticker]
             each_holding[0] = each_holding[0] + volume
-            each_holding[1].append([price, volume, "buy", date])
+            each_holding[1].append([price, volume, action, date])
 
-    def remove_stock(self, ticker, price, volume, date):
+    def remove_stock(self, ticker, price, volume, date, action):
         if ticker not in self.holding:
             raise ValueError(ticker,' unowned')
 
-        change = (price*volume) - self.transaction_fee
+        sell_price = (price*volume) - self.transaction_fee
 
         if self.fund + (price*volume) - self.transaction_fee < 0:
             raise ValueError("Insufficent for selling")
 
         each_holding = self.holding[ticker]
-        if each_holding[1] < volume:
+        if each_holding[0] < volume:
             raise ValueError("Insufficent volume")
         each_holding[0] -= volume
-        each_holding[1].append([price, volume, "sell", date])
-        self.fund += change
+        if action == "buy":
+            each_holding[1].append([price, volume, "sell", date])
+        else:
+            sell_price *= -1
+            each_holding[1].append([price, volume, "return", date])
+        self.fund += sell_price
 
     def print_portfolio(self):
         print("=======Funds=======")

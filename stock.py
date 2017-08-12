@@ -65,6 +65,7 @@ class Stock():
         self.vol = 0
         self.profit_margin = -1
         self.current_price = -1
+        self.action= None
         self.start_date = start_date #datetime object
         self.end_date = end_date #datetime object
         self.period = period #integer
@@ -80,9 +81,9 @@ class Stock():
 
         # TODO check format of self.data and fix this
         day_count = 0
-        for v1, v2 in self.data[['Open', 'Close']][self.period:]:
-            if (self.target_price <= v1 and self.target_price >= v2) or (self.target_price >= v1 and self.target_price <= v2):
-                return start_date + datetime.timedelta(days = period + day_count)
+        for date, data in self.data[['Open', 'Close']][self.period:].iterrows():
+            if (self.target_price <= data['Open'] and self.target_price >= data['Close']) or (self.target_price >= data['Open'] and self.target_price <= data['Close']):
+                return date
             day_count += 1
 
         return self.end_date
