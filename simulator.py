@@ -9,7 +9,7 @@ transaction_fee = 10
 max_stocks = 10
 period = 30
 
-end_date = dt.datetime.today() - dt.timedelta(days=2)
+end_date = dt.datetime.today()
 start_date = end_date - dt.timedelta(days=2*period)
 
 ob.run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, transaction_fee)
