@@ -116,9 +116,10 @@ def match_pattern(pattern_type, data):
     #plt.show()
     return match_helper(data, all_idx, pattern_type)
 
-def check_eligibility(sm, stock, e3, e4, e5, pattern):
-    # Check if 10% of the investment modal is enough to purchase the company stock
-    if (sm.get_current_fund() * 0.1 < e5):
+def check_eligibility(sm, stock, e3, e4, e5, pattern, risk):
+    # Check if risk of the investment modal is enough to purchase the company stock
+    if (sm.get_current_fund() * (risk) < e5):
+        print(stock.ticker, "too expensive for purchase")
         return False
 
     # Vol is the number of stocks we can buy.
@@ -126,10 +127,11 @@ def check_eligibility(sm, stock, e3, e4, e5, pattern):
     vol = math.floor((sm.get_current_fund() * sm.max_investment) / e5)
 
     # Check: Potential for profit needs to be greater than transaction fee
-    if (abs(e3 - e4) * 0.9 < sm.get_transaction_fee()):
+    if (abs(e3 - e4) * 0.9 * vol < sm.get_transaction_fee()*2):
+        print(stock.ticker, "out of transaction fee limit")
         return False
 
-    profit_margin = abs(e5 - e3) * 0.8
+    profit_margin = abs(e5 - e3) * 0.9
     if profit_margin * vol > sm.get_transaction_fee():
         if e5 > e3:
             target_price = e5 - profit_margin
@@ -138,6 +140,7 @@ def check_eligibility(sm, stock, e3, e4, e5, pattern):
             target_price = e5 + profit_margin
             stock.action = "buy"
     else:
+        print(stock.ticker, "profit margin too risky for purchase")
         return False
 
     stock.vol = vol
@@ -158,8 +161,10 @@ def order(type, stock_list):
         newlist = stock_list
     return newlist
 
-def eval(sm, p):
+def eval(sm, p, stock_list):
     for stockname, stock in sm.stocks.items():
+        if stock not in stock_list:
+            continue
         date = stock.target_time()
         if date:
             p.remove_stock(stockname, stock.target_price, stock.vol, date, stock.action)
@@ -178,9 +183,9 @@ def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, tra
             result = match_pattern(pattern, data[0:stock.period-1])
             if result[0]:
                 print("{} stock matches with pattern {}".format(stock.ticker, pattern))
-                if check_eligibility(sm, stock, result[1], result[2], result[3], pattern):
+                if check_eligibility(sm, stock, result[1], result[2], result[3], pattern, 1/max_stocks):
                     stock_list.append(stock)
-                    
+
     if not stock_list:
         print('No stocks are favorable')
         return
@@ -188,9 +193,9 @@ def run(start_date, end_date, period, initial_fund, max_stocks, ticker_list, tra
     for order_type in ORDERS:
         print("ordering stocks by {}".format(order_type))
         # Take top MAX_STOCKS investments
-        lst = order(order_type, stock_list)[0:max_stocks-1]
+        lst = order(order_type, stock_list)[0:max_stocks]
         # Update portfolio
         p = Portfolio(initial_fund, transaction_fee)
         for stock in lst:
             p.add_stock(stock.ticker, stock.current_price, stock.vol, sm.start_date + datetime.timedelta(days = stock.period), stock.target_price, stock.action)
-        eval(sm, p)
+        eval(sm, p, lst)

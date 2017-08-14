@@ -3,12 +3,13 @@ import owlbroker as ob
 import datetime as dt
 
 # inputs, can be changed by user
-ticker_list = ["IBM", "AMZN", "TSLA"]
-initial_fund = 50000
+ticker_list = ["IBM", "AMZN", "TSLA", "DUST", "NUGT", "DIS", "GMM", "LULU", "JDST"]
+initial_fund = 100000
 transaction_fee = 10
-max_stocks = 10
+max_stocks = 5
 period = 30
 
+# Stock market only availabe 9:40am to 5pm Monday to Friday excluding US federal holidays
 end_date = dt.datetime.today()
 start_date = end_date - dt.timedelta(days=2*period)
 
