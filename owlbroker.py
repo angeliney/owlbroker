@@ -162,12 +162,10 @@ def order(type, stock_list):
     return newlist
 
 def eval(sm, p, stock_list):
-    for stockname, stock in sm.stocks.items():
-        if stock not in stock_list:
-            continue
+    for stock in stock_list:
         date = stock.target_time()
         if date:
-            p.remove_stock(stockname, stock.target_price, stock.vol, date, stock.action)
+            p.remove_stock(stock.ticker, stock.target_price, stock.vol, date, stock.action)
 
     p.print_portfolio()
 
