@@ -2,7 +2,7 @@
 csc384 assignment to decide when to buy, sell, or short stocks
 
 # Instruction
-1. Install all module dependencies by running ‘pip install pandas pandas_datareader scipy matplotlib'
+1. Install all module dependencies by running ‘python3 pip install --user pandas pandas_datareader scipy matplotlib'
 2. Run simulator.py by  ‘python3 simulator.py’
 
 # Data Structure (WIP)
