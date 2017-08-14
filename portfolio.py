@@ -12,12 +12,12 @@ class Portfolio():
 
     def add_stock(self, ticker, price, volume, date, sell_price, action):
         total_price = (price * volume)
-        if total_price > self.fund:
-            raise ValueError('Insufficent funds')
         
         if action == "short":
             self.fund += total_price - self.transaction_fee
         else:
+            if total_price + self.transaction_fee > self.fund:
+                raise ValueError('Insufficent funds')            
             self.fund -= total_price + self.transaction_fee
 
         if ticker not in self.holding:

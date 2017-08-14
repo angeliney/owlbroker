@@ -117,14 +117,16 @@ def match_pattern(pattern_type, data):
     return match_helper(data, all_idx, pattern_type)
 
 def check_eligibility(sm, stock, e3, e4, e5, pattern, risk):
-    # Check if risk of the investment modal is enough to purchase the company stock
-    if (sm.get_current_fund() * (risk) < e5):
-        print(stock.ticker, "too expensive for purchase")
-        return False
+    temp_funds = sm.get_current_fund() - sm.get_transaction_fee()
 
     # Vol is the number of stocks we can buy.
     # We assume that the max amount we can spend on a company is max_investment of investment
-    vol = math.floor((sm.get_current_fund() * sm.max_investment) / e5)
+    vol = math.floor((temp_funds * sm.max_investment) / e5)
+    
+    # Check if risk of the investment modal is enough to purchase the company stock
+    if vol < 1:
+        print(stock.ticker, "too expensive for purchase")
+        return False    
 
     # Check: Potential for profit needs to be greater than transaction fee
     if (abs(e3 - e4) * 0.9 * vol < sm.get_transaction_fee()*2):
